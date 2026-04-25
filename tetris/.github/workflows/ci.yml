@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tetris/package-lock.json
+      - name: Install dependencies
+        working-directory: tetris
+        run: npm ci
+      - name: Lint
+        working-directory: tetris
+        run: npm run lint
+      - name: Type check
+        working-directory: tetris
+        run: npm run typecheck
+      - name: Test
+        working-directory: tetris
+        run: npm test -- --run
+      - name: Build
+        working-directory: tetris
+        run: npm run build

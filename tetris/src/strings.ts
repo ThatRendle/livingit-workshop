@@ -1,0 +1,9 @@
+export const TITLE = "BREAKTRIS";
+export const PRESS_SPACE_TO_START = "Press SPACE to Start";
+export const GAME_OVER = "GAME OVER";
+export const SCORE_LABEL = "SCORE";
+export const SPEED_LABEL = "SPEED";
+export const NEXT_LABEL = "NEXT";
+export const RESTART_PROMPT = "Press SPACE or R to Restart";
+export const CONTROLS_TETRIS = "Tetris: W/A/S/D";
+export const CONTROLS_BREAKOUT = "Breakout: Arrow Keys";
