@@ -3,7 +3,7 @@
 ## Workstation Setup
 
 ### Required Software
-- [ ] Node.js 20.19+
+- [ ] Node.js 22.0+
 - [ ] Claude Code
   - Mac/Linux: `curl -fsSL https://claude.ai/install.sh | bash`
   - Powershell: `irm https://claude.ai/install.ps1 | iex` 
@@ -22,5 +22,5 @@
 claude --version    # Should show 1.0.x or higher
 openspec --version  # Should show 1.x.x or higher
 gh auth status      # Should show authenticated
-node --version      # Should show v20.19.x or higher
+node --version      # Should show v22.x.x or higher
 ```
