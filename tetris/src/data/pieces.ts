@@ -75,7 +75,8 @@ export const PIECE_DEFINITIONS: Record<PieceType, PieceDefinition> = {
     colour: 0x0000f0,
     rotations: [
       [[0, 0], [1, 0], [1, 1], [1, 2]],
-      [[0, 1], [0, 2], [1, 1], [2, 1]],
+      // Pivot at right edge: cells extend left (dc=-1) so col 0 placement hits left wall
+      [[0, -1], [0, 0], [1, -1], [2, -1]],
       [[1, 0], [1, 1], [1, 2], [2, 2]],
       [[0, 1], [1, 1], [2, 0], [2, 1]],
     ],

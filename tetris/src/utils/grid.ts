@@ -1,4 +1,4 @@
-import { GRID_COLS, TOTAL_ROWS } from "../config";
+import { GRID_COLS, TETRIS_ROWS, TOTAL_ROWS } from "../config";
 import type { PieceType } from "../data/pieces";
 import { PIECE_DEFINITIONS } from "../data/pieces";
 
@@ -49,7 +49,7 @@ export function getPieceCells(piece: ActivePiece): ReadonlyArray<readonly [numbe
 export function canPlace(grid: Grid, piece: ActivePiece): boolean {
   const cells = getPieceCells(piece);
   for (const [r, c] of cells) {
-    if (r < 0 || r >= TOTAL_ROWS || c < 0 || c >= GRID_COLS) return false;
+    if (r < 0 || r >= TETRIS_ROWS || c < 0 || c >= GRID_COLS) return false;
     if (grid[r][c].state !== CellState.EMPTY) return false;
   }
   return true;
