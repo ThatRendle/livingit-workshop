@@ -12,6 +12,7 @@ import {
   CellState,
   canPlace,
   collapseRow,
+  fillInitialPit,
   getPieceRowRange,
   isRowComplete,
   lockPiece,
@@ -80,6 +81,7 @@ export class TetrisSystem {
     for (const t of ALL_PIECE_TYPES) pieceBag.push(t);
     this.shuffleBag(pieceBag);
     this.session.nextPieceType = pieceBag.pop()!;
+    fillInitialPit(this.session.grid);
     this.spawnPiece();
   }
 

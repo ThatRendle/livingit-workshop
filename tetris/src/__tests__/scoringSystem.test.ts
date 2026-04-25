@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { eventBus, Events } from "../events/EventBus";
 import { ScoringSystem } from "../systems/ScoringSystem";
-import { POINTS_ROW_COMPLETED, POINTS_ROW_DESTROYED } from "../config";
+import { POINTS_ROW_COMPLETED, POINTS_ROW_DESTROYED, POINTS_CELL_DESTROYED } from "../config";
 import { createGrid } from "../utils/grid";
 import { PieceType } from "../data/pieces";
 import type { GameSession } from "../types";
@@ -76,5 +76,21 @@ describe("ScoringSystem", () => {
     eventBus.emit(Events.ROW_COMPLETED, { rowIndex: 6 });
     eventBus.emit(Events.ROW_DESTROYED, { rowIndex: 10 });
     expect(session.score).toBe(POINTS_ROW_COMPLETED * 2 + POINTS_ROW_DESTROYED);
+  });
+
+  it("increases score by POINTS_CELL_DESTROYED on CELL_DESTROYED", () => {
+    const session = makeSession();
+    new ScoringSystem(session);
+    eventBus.emit(Events.CELL_DESTROYED, { rowIndex: 20, colIndex: 5 });
+    expect(session.score).toBe(POINTS_CELL_DESTROYED);
+  });
+
+  it("emits SCORE_CHANGED after CELL_DESTROYED", () => {
+    const session = makeSession();
+    new ScoringSystem(session);
+    const scoreChanged = vi.fn();
+    eventBus.on(Events.SCORE_CHANGED, scoreChanged);
+    eventBus.emit(Events.CELL_DESTROYED, { rowIndex: 20, colIndex: 5 });
+    expect(scoreChanged).toHaveBeenCalledWith({ score: POINTS_CELL_DESTROYED });
   });
 });

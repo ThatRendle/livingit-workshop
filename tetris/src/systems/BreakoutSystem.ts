@@ -17,6 +17,7 @@ import type { GameSession } from "../types";
 import { CellState } from "../utils/grid";
 import { resolveCircleAABB, reflectVelocity } from "../utils/collision";
 
+
 // Reusable AABB objects — no per-frame heap allocation
 const _wallBox = { x: 0, y: 0, width: 0, height: 0 };
 const _cellBox = { x: 0, y: 0, width: CELL_SIZE, height: CELL_SIZE };
@@ -140,7 +141,16 @@ export class BreakoutSystem {
   private resolveGridCells(): void {
     const { ball, grid } = this.session;
 
-    // Only check rows in the Breakout zone (TETRIS_ROWS to TOTAL_ROWS-1)
+    // Find the first (topmost) complete row in the Breakout zone.
+    // OCCUPIED cells below this row are individually breakable.
+    let firstCompleteRow = -1;
+    for (let r = TETRIS_ROWS; r < TOTAL_ROWS; r++) {
+      if (grid[r][0].state === CellState.COMPLETED) {
+        firstCompleteRow = r;
+        break;
+      }
+    }
+
     const ballCircle = {
       x: ball.x,
       y: ball.y,
@@ -169,36 +179,31 @@ export class BreakoutSystem {
         ballCircle.x = ball.x;
         ballCircle.y = ball.y;
 
+        const [rvx, rvy] = reflectVelocity(
+          ball.velocityX,
+          ball.velocityY,
+          result.normalX,
+          result.normalY
+        );
+        ball.velocityX = rvx;
+        ball.velocityY = rvy;
+
         if (cell.state === CellState.COMPLETED) {
           // Destroy entire row
-          const rowIdx = r;
           for (let cc = 0; cc < GRID_COLS; cc++) {
-            grid[rowIdx][cc].state = CellState.EMPTY;
-            grid[rowIdx][cc].pieceType = null;
+            grid[r][cc].state = CellState.EMPTY;
+            grid[r][cc].pieceType = null;
           }
-          eventBus.emit(Events.ROW_DESTROYED, { rowIndex: rowIdx });
-          // Ball reflects
-          const [rvx, rvy] = reflectVelocity(
-            ball.velocityX,
-            ball.velocityY,
-            result.normalX,
-            result.normalY
-          );
-          ball.velocityX = rvx;
-          ball.velocityY = rvy;
+          eventBus.emit(Events.ROW_DESTROYED, { rowIndex: r });
           // Row is now empty — no further cells in this row
           break;
-        } else {
-          // OCCUPIED — reflect
-          const [rvx, rvy] = reflectVelocity(
-            ball.velocityX,
-            ball.velocityY,
-            result.normalX,
-            result.normalY
-          );
-          ball.velocityX = rvx;
-          ball.velocityY = rvy;
+        } else if (firstCompleteRow !== -1 && r > firstCompleteRow) {
+          // OCCUPIED cell below a complete row — destroy just this cell
+          cell.state = CellState.EMPTY;
+          cell.pieceType = null;
+          eventBus.emit(Events.CELL_DESTROYED, { rowIndex: r, colIndex: c });
         }
+        // else: OCCUPIED with no complete row above — reflect only (already done)
       }
     }
   }

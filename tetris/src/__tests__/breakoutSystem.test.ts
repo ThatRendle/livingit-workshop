@@ -13,8 +13,9 @@ import {
   TOTAL_ROWS,
   CELL_SIZE,
   SPEED_RATCHET_BASE,
+  TETRIS_ROWS,
 } from "../config";
-import { createGrid } from "../utils/grid";
+import { createGrid, CellState, markRowCompleted } from "../utils/grid";
 import { PieceType } from "../data/pieces";
 import type { GameSession } from "../types";
 import { GamePhase } from "../types";
@@ -133,5 +134,82 @@ describe("BreakoutSystem — paddle movement clamping", () => {
     const sys = new BreakoutSystem(session);
     sys.movePaddleRight(10000); // large delta
     expect(session.paddle.x).toBe(PIT_X + PIT_WIDTH - PADDLE_WIDTH / 2);
+  });
+});
+
+describe("BreakoutSystem — cell destruction below complete row", () => {
+  // Place ball at the pixel centre of a given grid cell
+  function placeBallAtCell(session: GameSession, row: number, col: number) {
+    session.ball.x = PIT_X + col * CELL_SIZE + CELL_SIZE / 2;
+    session.ball.y = PIT_Y + row * CELL_SIZE + CELL_SIZE / 2;
+    session.ball.velocityX = 0;
+    session.ball.velocityY = BALL_SPEED; // moving downward — will hit then reflect
+    session.ball.active = true;
+  }
+
+  beforeEach(() => {
+    eventBus.removeAllListeners();
+  });
+
+  it("destroys a single OCCUPIED cell below a COMPLETED row and emits CELL_DESTROYED", () => {
+    const session = makeSession();
+    // Complete row at top of breakout zone
+    for (let c = 0; c < 10; c++) {
+      session.grid[TETRIS_ROWS][c].state = CellState.COMPLETED;
+      session.grid[TETRIS_ROWS][c].pieceType = PieceType.I;
+    }
+    // Occupied cell one row below
+    session.grid[TETRIS_ROWS + 1][5].state = CellState.OCCUPIED;
+    session.grid[TETRIS_ROWS + 1][5].pieceType = PieceType.T;
+
+    const cellDestroyed = vi.fn();
+    eventBus.on(Events.CELL_DESTROYED, cellDestroyed);
+
+    const sys = new BreakoutSystem(session);
+    placeBallAtCell(session, TETRIS_ROWS + 1, 5);
+    sys.update(0);
+
+    expect(cellDestroyed).toHaveBeenCalledOnce();
+    expect(cellDestroyed).toHaveBeenCalledWith({ rowIndex: TETRIS_ROWS + 1, colIndex: 5 });
+    expect(session.grid[TETRIS_ROWS + 1][5].state).toBe(CellState.EMPTY);
+    expect(session.grid[TETRIS_ROWS + 1][5].pieceType).toBeNull();
+  });
+
+  it("does NOT destroy an OCCUPIED cell when no COMPLETED row exists above it", () => {
+    const session = makeSession();
+    // Occupied cell in breakout zone, no complete row anywhere
+    session.grid[TETRIS_ROWS + 1][5].state = CellState.OCCUPIED;
+    session.grid[TETRIS_ROWS + 1][5].pieceType = PieceType.T;
+
+    const cellDestroyed = vi.fn();
+    eventBus.on(Events.CELL_DESTROYED, cellDestroyed);
+
+    const sys = new BreakoutSystem(session);
+    placeBallAtCell(session, TETRIS_ROWS + 1, 5);
+    sys.update(0);
+
+    expect(cellDestroyed).not.toHaveBeenCalled();
+    expect(session.grid[TETRIS_ROWS + 1][5].state).toBe(CellState.OCCUPIED);
+  });
+
+  it("does NOT destroy an OCCUPIED cell that is ABOVE the first complete row", () => {
+    const session = makeSession();
+    // Occupied cell at row TETRIS_ROWS, complete row below it at TETRIS_ROWS + 1
+    session.grid[TETRIS_ROWS][5].state = CellState.OCCUPIED;
+    session.grid[TETRIS_ROWS][5].pieceType = PieceType.T;
+    for (let c = 0; c < 10; c++) {
+      session.grid[TETRIS_ROWS + 1][c].state = CellState.COMPLETED;
+      session.grid[TETRIS_ROWS + 1][c].pieceType = PieceType.I;
+    }
+
+    const cellDestroyed = vi.fn();
+    eventBus.on(Events.CELL_DESTROYED, cellDestroyed);
+
+    const sys = new BreakoutSystem(session);
+    placeBallAtCell(session, TETRIS_ROWS, 5);
+    sys.update(0);
+
+    expect(cellDestroyed).not.toHaveBeenCalled();
+    expect(session.grid[TETRIS_ROWS][5].state).toBe(CellState.OCCUPIED);
   });
 });

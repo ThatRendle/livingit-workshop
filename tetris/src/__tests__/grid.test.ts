@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   createGrid,
+  fillInitialPit,
   isRowComplete,
   markRowCompleted,
   collapseRow,
@@ -163,5 +164,56 @@ describe("lockPiece", () => {
     lockPiece(g, piece);
     expect(g[10][3].state).toBe(CellState.EMPTY);
     expect(g[9][4].state).toBe(CellState.EMPTY);
+  });
+});
+
+describe("fillInitialPit", () => {
+  const PIT_TOP = TOTAL_ROWS - 3; // row 23
+
+  it("fills row 23 with all COMPLETED cells", () => {
+    const g = createGrid();
+    fillInitialPit(g);
+    for (let c = 0; c < GRID_COLS; c++) {
+      expect(g[PIT_TOP][c].state).toBe(CellState.COMPLETED);
+    }
+  });
+
+  it("gives every filled cell in row 23 a non-null pieceType", () => {
+    const g = createGrid();
+    fillInitialPit(g);
+    for (let c = 0; c < GRID_COLS; c++) {
+      expect(g[PIT_TOP][c].pieceType).not.toBeNull();
+    }
+  });
+
+  it("rows 24 and 25 are each partially filled (between 1 and 9 cells)", () => {
+    const g = createGrid();
+    fillInitialPit(g);
+    for (const row of [PIT_TOP + 1, PIT_TOP + 2]) {
+      const filled = g[row].filter((c) => c.state !== CellState.EMPTY).length;
+      expect(filled).toBeGreaterThanOrEqual(1);
+      expect(filled).toBeLessThanOrEqual(9);
+    }
+  });
+
+  it("all non-empty cells in rows 24–25 have a non-null pieceType", () => {
+    const g = createGrid();
+    fillInitialPit(g);
+    for (const row of [PIT_TOP + 1, PIT_TOP + 2]) {
+      for (let c = 0; c < GRID_COLS; c++) {
+        if (g[row][c].state !== CellState.EMPTY) {
+          expect(g[row][c].pieceType).not.toBeNull();
+        }
+      }
+    }
+  });
+
+  it("does not touch rows outside the 3-row pit area", () => {
+    const g = createGrid();
+    fillInitialPit(g);
+    // Row above the pit should still be empty
+    for (let c = 0; c < GRID_COLS; c++) {
+      expect(g[PIT_TOP - 1][c].state).toBe(CellState.EMPTY);
+    }
   });
 });

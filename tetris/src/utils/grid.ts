@@ -1,6 +1,5 @@
 import { GRID_COLS, TETRIS_ROWS, TOTAL_ROWS } from "../config";
-import type { PieceType } from "../data/pieces";
-import { PIECE_DEFINITIONS } from "../data/pieces";
+import { PieceType, PIECE_DEFINITIONS } from "../data/pieces";
 
 export enum CellState {
   EMPTY = 0,
@@ -108,4 +107,58 @@ export function getPieceRowRange(piece: ActivePiece): readonly [number, number] 
     if (r > maxR) maxR = r;
   }
   return [minR, maxR];
+}
+
+// Each config is a 3×10 grid of PieceType|null.
+// Row 0 → grid row 23 (COMPLETED), rows 1–2 → grid rows 24–25 (OCCUPIED).
+// null means empty. Verified: row 0 fully filled, rows 1–2 each partially filled.
+const _ = null;
+const I = PieceType.I;
+const O = PieceType.O;
+const T = PieceType.T;
+const S = PieceType.S;
+const Z = PieceType.Z;
+const J = PieceType.J;
+const L = PieceType.L;
+
+const PIT_CONFIGS: ReadonlyArray<ReadonlyArray<ReadonlyArray<PieceType | null>>> = [
+  // Config 0 — I+I+O base, left-heavy pile
+  [
+    [I, I, I, I, I, I, I, I, O, O],
+    [_, T, Z, Z, _, L, L, L, O, O],
+    [T, T, T, Z, Z, L, _, _, _, _],
+  ],
+  // Config 1 — I+I+O base, right-heavy pile
+  [
+    [I, I, I, I, I, I, I, I, O, O],
+    [J, _, _, _, T, Z, Z, _, O, O],
+    [J, J, J, T, T, T, Z, Z, _, _],
+  ],
+  // Config 2 — I+I+O base, sparse bottom
+  [
+    [I, I, I, I, I, I, I, I, O, O],
+    [_, S, S, L, L, L, Z, Z, O, O],
+    [S, S, _, _, _, L, _, Z, Z, _],
+  ],
+  // Config 3 — J+T+I base (distinct complete row)
+  [
+    [J, J, J, T, T, T, I, I, I, I],
+    [J, O, O, _, T, _, S, S, _, J],
+    [_, O, O, _, _, S, S, J, J, J],
+  ],
+];
+
+/** Pre-fills the bottom 3 rows of the Breakout zone with a randomly selected pit configuration. */
+export function fillInitialPit(grid: Grid): void {
+  const config = PIT_CONFIGS[Math.floor(Math.random() * PIT_CONFIGS.length)];
+  const startRow = TOTAL_ROWS - 3; // row 23
+  for (let localRow = 0; localRow < 3; localRow++) {
+    const gridRow = startRow + localRow;
+    for (let c = 0; c < GRID_COLS; c++) {
+      const pieceType = config[localRow][c];
+      if (pieceType === null) continue;
+      grid[gridRow][c].pieceType = pieceType;
+      grid[gridRow][c].state = localRow === 0 ? CellState.COMPLETED : CellState.OCCUPIED;
+    }
+  }
 }

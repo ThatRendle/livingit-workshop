@@ -3,6 +3,7 @@ import type { PieceType } from "../data/pieces";
 export const Events = {
   ROW_COMPLETED: "ROW_COMPLETED",
   ROW_DESTROYED: "ROW_DESTROYED",
+  CELL_DESTROYED: "CELL_DESTROYED",
   BALL_DROPPED: "BALL_DROPPED",
   PIECE_LOCKED: "PIECE_LOCKED",
   STACK_OVERFLOW: "STACK_OVERFLOW",
@@ -32,6 +33,11 @@ export interface SpeedChangedPayload {
   multiplier: number;
 }
 
+export interface CellDestroyedPayload {
+  rowIndex: number;
+  colIndex: number;
+}
+
 type Handler = (...args: unknown[]) => void;
 
 // Pure-JS typed event bus — no Phaser dependency (works in Node/test environments)
@@ -40,6 +46,7 @@ class TypedEventBus {
 
   on(event: typeof Events.ROW_COMPLETED, fn: (p: RowCompletedPayload) => void): void;
   on(event: typeof Events.ROW_DESTROYED, fn: (p: RowDestroyedPayload) => void): void;
+  on(event: typeof Events.CELL_DESTROYED, fn: (p: CellDestroyedPayload) => void): void;
   on(event: typeof Events.BALL_DROPPED, fn: (p?: undefined) => void): void;
   on(event: typeof Events.PIECE_LOCKED, fn: (p: PieceLockedPayload) => void): void;
   on(event: typeof Events.STACK_OVERFLOW, fn: (p?: undefined) => void): void;
@@ -68,6 +75,7 @@ class TypedEventBus {
 
   emit(event: typeof Events.ROW_COMPLETED, payload: RowCompletedPayload): void;
   emit(event: typeof Events.ROW_DESTROYED, payload: RowDestroyedPayload): void;
+  emit(event: typeof Events.CELL_DESTROYED, payload: CellDestroyedPayload): void;
   emit(event: typeof Events.BALL_DROPPED): void;
   emit(event: typeof Events.PIECE_LOCKED, payload: PieceLockedPayload): void;
   emit(event: typeof Events.STACK_OVERFLOW): void;

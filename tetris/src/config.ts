@@ -43,6 +43,7 @@ export const SPEED_RATCHET_MAX = 3.0;
 // Scoring
 export const POINTS_ROW_COMPLETED = 100;
 export const POINTS_ROW_DESTROYED = 250;
+export const POINTS_CELL_DESTROYED = 25;
 
 // Colours
 export const COLOUR_BACKGROUND = 0x1a1a2e;
